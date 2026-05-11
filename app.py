@@ -1,8 +1,15 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from PIL import Image
 from datetime import date
 from sklearn.linear_model import LinearRegression
+
+# =========================================================
+# LOAD LOGO
+# =========================================================
+
+logo = Image.open("assets/lifelens_logo.png")
 
 # =========================================================
 # PAGE CONFIG
@@ -10,31 +17,81 @@ from sklearn.linear_model import LinearRegression
 
 st.set_page_config(
     page_title="LifeLens",
-    page_icon="📊",
+    page_icon=logo,
     layout="wide"
 )
 
 # =========================================================
-# CUSTOM STYLING
+# PREMIUM UI STYLING
 # =========================================================
 
 st.markdown("""
 <style>
 
-.main {
-    background-color: #0E1117;
+/* Main Background */
+.stApp {
+    background: linear-gradient(135deg, #0f172a, #111827);
     color: white;
 }
 
-.stMetric {
-    background-color: #1E1E1E;
-    padding: 15px;
-    border-radius: 15px;
-    border: 1px solid #333;
+/* Main Container */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
 }
 
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: #111827;
+    border-right: 1px solid #374151;
+}
+
+/* Titles */
+h1, h2, h3 {
+    color: white;
+}
+
+/* Metric Cards */
+div[data-testid="metric-container"] {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    transition: 0.3s ease;
+}
+
+div[data-testid="metric-container"]:hover {
+    transform: translateY(-5px);
+    border: 1px solid #00ADB5;
+}
+
+/* Metric Value */
 div[data-testid="stMetricValue"] {
-    font-size: 28px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #00E5FF;
+}
+
+/* Buttons */
+.stButton>button {
+    background: linear-gradient(90deg, #00ADB5, #007CF0);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+}
+
+/* Download Button */
+.stDownloadButton>button {
+    background: linear-gradient(90deg, #10B981, #059669);
+    color: white;
+    border-radius: 12px;
+    border: none;
 }
 
 </style>
@@ -48,37 +105,28 @@ DATA_PATH = "data/life_data.csv"
 
 df = pd.read_csv(DATA_PATH)
 
-# Convert date column safely
+# Convert dates safely
 df["date"] = pd.to_datetime(
     df["date"],
     format="mixed",
     errors="coerce"
 )
 
-# Remove invalid dates if any
+# Remove invalid rows
 df = df.dropna(subset=["date"])
 
 # =========================================================
-# LIFE SCORE CALCULATION
+# LIFE SCORE
 # =========================================================
 
 def calculate_life_score(row):
 
     score = 0
 
-    # Sleep score
     score += min(row["sleep_hours"] * 10, 100) * 0.25
-
-    # Productivity score
     score += row["productivity"] * 10 * 0.30
-
-    # Exercise score
     score += min(row["exercise_minutes"], 60) / 60 * 100 * 0.15
-
-    # Water intake score
     score += min(row["water_intake"], 3) / 3 * 100 * 0.10
-
-    # Stress reduction score
     score += (10 - row["stress_level"]) * 10 * 0.20
 
     return round(score, 1)
@@ -89,29 +137,29 @@ df["life_score"] = df.apply(
 )
 
 # =========================================================
-# BURNOUT RISK CALCULATION
+# BURNOUT RISK
 # =========================================================
 
 def calculate_burnout_risk(row):
 
-    risk_score = 0
+    risk = 0
 
     if row["sleep_hours"] < 6:
-        risk_score += 3
+        risk += 3
 
     if row["stress_level"] > 7:
-        risk_score += 3
+        risk += 3
 
     if row["screen_time"] > 8:
-        risk_score += 2
+        risk += 2
 
     if row["productivity"] < 4:
-        risk_score += 2
+        risk += 2
 
-    if risk_score >= 7:
+    if risk >= 7:
         return "High"
 
-    elif risk_score >= 4:
+    elif risk >= 4:
         return "Medium"
 
     else:
@@ -147,7 +195,8 @@ df["predicted_productivity"] = model.predict(features)
 # SIDEBAR
 # =========================================================
 
-st.sidebar.title("📊 LifeLens")
+st.sidebar.image(logo, width=180)
+st.sidebar.markdown("## LifeLens")
 
 page = st.sidebar.radio(
     "Navigation",
@@ -155,41 +204,37 @@ page = st.sidebar.radio(
 )
 
 # =========================================================
-# DASHBOARD PAGE
+# DASHBOARD
 # =========================================================
 
 if page == "Dashboard":
 
-    st.title("🚀 LifeLens")
-    st.subheader("AI-Powered Personal Life Analytics")
 
-    # =====================================================
-    # SIDEBAR STATS
-    # =====================================================
+    # HERO SECTION
+    st.title("LifeLens")
 
-    st.sidebar.write("## 📈 Quick Stats")
-
-    st.sidebar.info(
-        f"🌟 Avg Life Score: {round(df['life_score'].mean(),1)}"
-    )
-
-    st.sidebar.info(
-        f"⚡ Avg Productivity: {round(df['productivity'].mean(),1)}"
-    )
-
-    st.sidebar.info(
-        f"😴 Avg Sleep: {round(df['sleep_hours'].mean(),1)} hrs"
-    )
+    st.markdown("""
+    <div style='
+    background: linear-gradient(90deg,#00ADB5,#007CF0);
+    padding: 1.2rem;
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    '>
+    <h2 style='color:white;margin:0;'>
+    AI-Powered Personal Life Analytics
+    </h2>
+    <p style='color:white;font-size:18px;'>
+    Track habits, predict burnout, and optimize productivity.
+    </p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # =====================================================
     # KPI CARDS
     # =====================================================
 
-    latest_score = round(
-        df.iloc[-1]["life_score"],
-        1
-    )
-
+    latest_score = round(df.iloc[-1]["life_score"], 1)
     latest_burnout = df.iloc[-1]["burnout_risk"]
 
     col1, col2, col3, col4 = st.columns(4)
@@ -200,8 +245,8 @@ if page == "Dashboard":
     )
 
     col2.metric(
-        "⚡ Productivity",
-        round(df["productivity"].mean(),1)
+        "⚡ Avg Productivity",
+        round(df["productivity"].mean(), 1)
     )
 
     col3.metric(
@@ -210,7 +255,7 @@ if page == "Dashboard":
     )
 
     col4.metric(
-        "🔥 Burnout",
+        "🔥 Burnout Risk",
         latest_burnout
     )
 
@@ -220,13 +265,21 @@ if page == "Dashboard":
     # LIFE SCORE TREND
     # =====================================================
 
-    st.write("# 🌟 Life Score Trend")
+    st.subheader("🌟 Life Score Trend")
 
     life_chart = px.line(
         df,
         x="date",
         y="life_score",
-        markers=True
+        markers=True,
+        template="plotly_dark"
+    )
+
+    life_chart.update_layout(
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        font=dict(color="white"),
+        height=500
     )
 
     st.plotly_chart(
@@ -238,13 +291,20 @@ if page == "Dashboard":
     # PRODUCTIVITY TREND
     # =====================================================
 
-    st.write("# ⚡ Productivity Trend")
+    st.subheader("⚡ Productivity Trend")
 
-    productivity_chart = px.line(
+    productivity_chart = px.area(
         df,
         x="date",
         y="productivity",
-        markers=True
+        template="plotly_dark"
+    )
+
+    productivity_chart.update_layout(
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        font=dict(color="white"),
+        height=500
     )
 
     st.plotly_chart(
@@ -253,17 +313,24 @@ if page == "Dashboard":
     )
 
     # =====================================================
-    # PREDICTED PRODUCTIVITY
+    # PRODUCTIVITY PREDICTION
     # =====================================================
 
-    st.write("# 🤖 Predicted Productivity")
+    st.subheader("🤖 Predicted Productivity")
 
     prediction_chart = px.line(
         df,
         x="date",
         y=["productivity", "predicted_productivity"],
         markers=True,
-        title="Actual vs Predicted Productivity"
+        template="plotly_dark"
+    )
+
+    prediction_chart.update_layout(
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        font=dict(color="white"),
+        height=500
     )
 
     st.plotly_chart(
@@ -275,15 +342,23 @@ if page == "Dashboard":
     # SCREEN TIME IMPACT
     # =====================================================
 
-    st.write("# 📱 Screen Time Impact")
+    st.subheader("📱 Screen Time vs Productivity")
 
     scatter_chart = px.scatter(
         df,
         x="screen_time",
         y="productivity",
         size="stress_level",
-        color="mood",
-        hover_data=["sleep_hours"]
+        color="life_score",
+        hover_data=["sleep_hours"],
+        template="plotly_dark"
+    )
+
+    scatter_chart.update_layout(
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        font=dict(color="white"),
+        height=500
     )
 
     st.plotly_chart(
@@ -295,12 +370,19 @@ if page == "Dashboard":
     # MOOD ANALYSIS
     # =====================================================
 
-    st.write("# 😊 Mood Analysis")
+    st.subheader("😊 Mood Distribution")
 
     mood_chart = px.histogram(
         df,
         x="mood",
-        color="mood"
+        color="mood",
+        template="plotly_dark"
+    )
+
+    mood_chart.update_layout(
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        font=dict(color="white")
     )
 
     st.plotly_chart(
@@ -309,38 +391,27 @@ if page == "Dashboard":
     )
 
     # =====================================================
-    # BURNOUT ANALYSIS
-    # =====================================================
-
-    st.write("# 🔥 Burnout Analysis")
-
-    burnout_chart = px.histogram(
-        df,
-        x="burnout_risk",
-        color="burnout_risk"
-    )
-
-    st.plotly_chart(
-        burnout_chart,
-        use_container_width=True
-    )
-
-    # =====================================================
     # CORRELATION HEATMAP
     # =====================================================
 
-    st.write("# 🔥 Correlation Heatmap")
+    st.subheader("🔥 Correlation Heatmap")
 
-    numeric_df = df.select_dtypes(
-        include=["number"]
-    )
+    numeric_df = df.select_dtypes(include=["number"])
 
     correlation = numeric_df.corr()
 
     heatmap = px.imshow(
         correlation,
         text_auto=True,
-        aspect="auto"
+        aspect="auto",
+        template="plotly_dark"
+    )
+
+    heatmap.update_layout(
+        paper_bgcolor="#111827",
+        plot_bgcolor="#111827",
+        font=dict(color="white"),
+        height=700
     )
 
     st.plotly_chart(
@@ -352,31 +423,16 @@ if page == "Dashboard":
     # AI RECOMMENDATIONS
     # =====================================================
 
-    st.write("# 🧠 AI Recommendations")
+    st.subheader("🧠 AI Recommendations")
 
-    avg_sleep = df["sleep_hours"].mean()
+    if df["sleep_hours"].mean() < 6:
+        st.warning("😴 Increase sleep duration for better productivity.")
 
-    if avg_sleep < 6:
+    if df["screen_time"].mean() > 7:
+        st.warning("📱 Reduce screen time to lower stress.")
 
-        st.warning(
-            "😴 Increase sleep duration for better productivity."
-        )
-
-    avg_screen = df["screen_time"].mean()
-
-    if avg_screen > 7:
-
-        st.warning(
-            "📱 Reduce screen time to lower stress."
-        )
-
-    avg_water = df["water_intake"].mean()
-
-    if avg_water < 2:
-
-        st.warning(
-            "💧 Drink more water daily."
-        )
+    if df["water_intake"].mean() < 2:
+        st.warning("💧 Drink more water daily.")
 
     best_days = df[df["life_score"] > 80]
 
@@ -392,26 +448,10 @@ if page == "Dashboard":
         )
 
     # =====================================================
-    # WEEKLY SUMMARY
-    # =====================================================
-
-    st.write("# 📅 Weekly Summary")
-
-    st.info(f"""
-    🌟 Average Life Score: {round(df['life_score'].mean(),1)}
-
-    ⚡ Average Productivity: {round(df['productivity'].mean(),1)}
-
-    😴 Average Sleep: {round(df['sleep_hours'].mean(),1)} hrs
-
-    🔥 Burnout Risk: {df.iloc[-1]['burnout_risk']}
-    """)
-
-    # =====================================================
     # DOWNLOAD REPORT
     # =====================================================
 
-    st.write("# 📥 Download Report")
+    st.subheader("📥 Download Report")
 
     csv = df.to_csv(index=False)
 
@@ -423,18 +463,46 @@ if page == "Dashboard":
     )
 
     # =====================================================
-    # DATA TABLE
+    # LIFE RECORDS
     # =====================================================
 
-    st.write("# 📋 Life Records")
+    st.subheader("📋 Life Records")
 
     st.dataframe(
         df,
         use_container_width=True
     )
 
+    # =====================================================
+    # DELETE RECORDS
+    # =====================================================
+
+    st.subheader("🗑 Delete Records")
+
+    record_index = st.number_input(
+        "Enter Row Number to Delete",
+        min_value=0,
+        max_value=len(df)-1,
+        step=1
+    )
+
+    if st.button("Delete Selected Record"):
+
+        df = df.drop(index=record_index)
+
+        df = df.reset_index(drop=True)
+
+        df.to_csv(
+            DATA_PATH,
+            index=False
+        )
+
+        st.success("✅ Record Deleted Successfully")
+
+        st.rerun()
+
 # =========================================================
-# ADD ENTRY PAGE
+# ADD DAILY ENTRY
 # =========================================================
 
 elif page == "Add Daily Entry":
@@ -443,56 +511,32 @@ elif page == "Add Daily Entry":
 
     with st.form("life_form"):
 
-        # =====================================================
-        # DATE
-        # =====================================================
-
         entry_date = st.date_input(
             "Date",
             date.today()
         )
-
-        # =====================================================
-        # SLEEP
-        # =====================================================
 
         sleep_hours = st.slider(
             "😴 Sleep Hours",
             0.0, 12.0, 7.0
         )
 
-        # =====================================================
-        # MOOD
-        # =====================================================
-
         mood = st.selectbox(
             "😊 Mood",
             ["Happy", "Focused", "Neutral", "Tired", "Stressed"]
         )
-
-        # =====================================================
-        # STUDY HOURS
-        # =====================================================
 
         study_hours = st.slider(
             "📚 Study Hours",
             0.0, 15.0, 2.0
         )
 
-        # =====================================================
-        # SCREEN TIME
-        # =====================================================
-
         screen_time = st.slider(
             "📱 Screen Time",
             0.0, 15.0, 5.0
         )
 
-        # =====================================================
-        # MANUAL EXPENSE ENTRY
-        # =====================================================
-
-        st.write("### 💰 Daily Expenses")
+        st.subheader("💰 Daily Expenses")
 
         expense_text = st.text_area(
             "Enter expenses manually",
@@ -520,53 +564,29 @@ elif page == "Add Daily Entry":
 
         st.info(f"Total Expenses: ₹{expenses}")
 
-        # =====================================================
-        # EXERCISE
-        # =====================================================
-
         exercise_minutes = st.slider(
             "🏃 Exercise Minutes",
             0, 180, 20
         )
 
-        # =====================================================
-        # WATER INTAKE
-        # =====================================================
-
         water_intake = st.slider(
-            "💧 Water Intake (Liters)",
+            "💧 Water Intake",
             0.0, 5.0, 2.0
         )
-
-        # =====================================================
-        # PRODUCTIVITY
-        # =====================================================
 
         productivity = st.slider(
             "⚡ Productivity Score",
             1, 10, 5
         )
 
-        # =====================================================
-        # STRESS LEVEL
-        # =====================================================
-
         stress_level = st.slider(
             "😓 Stress Level",
             1, 10, 5
         )
 
-        # =====================================================
-        # SUBMIT BUTTON
-        # =====================================================
-
         submitted = st.form_submit_button(
             "Save Entry"
         )
-
-        # =====================================================
-        # SAVE DATA
-        # =====================================================
 
         if submitted:
 
@@ -595,6 +615,6 @@ elif page == "Add Daily Entry":
                 index=False
             )
 
-            st.success(
-                "✅ Entry Saved Successfully!"
-            )
+            st.success("✅ Entry Saved Successfully!")
+
+            st.rerun()
